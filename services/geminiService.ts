@@ -1,4 +1,48 @@
-import { GoogleGenAI, Modality, PersonGeneration } from "@google/genai";
+
+import { GoogleGenAI, Modality, PersonGeneration, Type } from "@google/genai";
+
+/**
+ * Generates a list of creative prompts.
+ * @returns A promise that resolves to an array of string prompts.
+ */
+export const generateIdeas = async (): Promise<string[]> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const model = 'gemini-2.5-flash';
+  const prompt = `Generate a list of 5 creative, visually descriptive, and unique prompts suitable for an AI image or video generator.`;
+
+  try {
+    const response = await ai.models.generateContent({
+        model: model,
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    prompts: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.STRING,
+                            description: "A creative prompt"
+                        }
+                    }
+                }
+            }
+        }
+    });
+    const jsonStr = response.text.trim();
+    const result = JSON.parse(jsonStr);
+    if (result.prompts && Array.isArray(result.prompts)) {
+        return result.prompts;
+    } else {
+        throw new Error("AI response did not contain a 'prompts' array.");
+    }
+  } catch (error) {
+    console.error("Error generating ideas:", error);
+    throw new Error("Failed to communicate with the AI model for idea generation.");
+  }
+};
+
 
 /**
  * Generates a story opening based on an image.

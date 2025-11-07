@@ -1,31 +1,40 @@
 
 import React, { useState } from 'react';
-import { GitHubIcon, VideoIcon, ImageIcon, StoryIcon } from './components/icons';
+import { GitHubIcon, VideoIcon, ImageIcon, StoryIcon, IdeaIcon } from './components/icons';
 import { VideoCreator } from './components/VideoCreator';
 import { StoryCreator } from './components/StoryCreator';
 import { ImageGenerator } from './components/ImageGenerator';
+import { IdeaGenerator } from './components/IdeaGenerator';
 import { useLanguage } from './contexts/LanguageContext';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 
 
-type Tab = 'story' | 'image' | 'video';
+type Tab = 'story' | 'idea' | 'image' | 'video';
 
 const App: React.FC = () => {
     const [activeTab, setActiveTab] = useState<Tab>('story');
     const [videoPrompt, setVideoPrompt] = useState('');
+    const [imagePrompt, setImagePrompt] = useState('');
     const { t } = useLanguage();
 
     const sendPromptToVideoCreator = (prompt: string) => {
         setVideoPrompt(prompt);
         setActiveTab('video');
     };
+    
+    const sendPromptToImageGenerator = (prompt: string) => {
+        setImagePrompt(prompt);
+        setActiveTab('image');
+    };
 
     const renderContent = () => {
         switch (activeTab) {
             case 'story':
                 return <StoryCreator sendPromptToVideoCreator={sendPromptToVideoCreator} />;
+            case 'idea':
+                return <IdeaGenerator sendPromptToImageGenerator={sendPromptToImageGenerator} sendPromptToVideoCreator={sendPromptToVideoCreator} />;
             case 'image':
-                return <ImageGenerator sendPromptToVideoCreator={sendPromptToVideoCreator} />;
+                return <ImageGenerator initialPrompt={imagePrompt} sendPromptToVideoCreator={sendPromptToVideoCreator} />;
             case 'video':
                 return <VideoCreator initialPrompt={videoPrompt} />;
             default:
@@ -35,6 +44,7 @@ const App: React.FC = () => {
 
     const tabs: { id: Tab; labelKey: string; icon: React.FC<React.SVGProps<SVGSVGElement>>; color: string }[] = [
         { id: 'story', labelKey: 'tab.story', icon: StoryIcon, color: 'purple' },
+        { id: 'idea', labelKey: 'tab.idea', icon: IdeaIcon, color: 'pink' },
         { id: 'image', labelKey: 'tab.image', icon: ImageIcon, color: 'amber' },
         { id: 'video', labelKey: 'tab.video', icon: VideoIcon, color: 'cyan' },
     ];
@@ -43,11 +53,13 @@ const App: React.FC = () => {
         const isActive = activeTab === tabId;
         const colorClasses: { [key: string]: string } = {
             purple: 'border-purple-500 text-purple-400',
+            pink: 'border-pink-500 text-pink-400',
             amber: 'border-amber-500 text-amber-400',
             cyan: 'border-cyan-500 text-cyan-400'
         };
         const hoverColorClasses: { [key: string]: string } = {
              purple: 'hover:bg-purple-900/50 hover:text-purple-300',
+             pink: 'hover:bg-pink-900/50 hover:text-pink-300',
              amber: 'hover:bg-amber-900/50 hover:text-amber-300',
              cyan: 'hover:bg-cyan-900/50 hover:text-cyan-300'
         }

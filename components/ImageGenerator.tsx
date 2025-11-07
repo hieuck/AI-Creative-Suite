@@ -7,6 +7,7 @@ import { ImageIcon, VideoIcon, MagicIcon, InfoIcon, ShareIcon } from './icons';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface ImageGeneratorProps {
+    initialPrompt?: string;
     sendPromptToVideoCreator: (prompt: string) => void;
 }
 
@@ -31,7 +32,7 @@ const randomPrompts = [
     'A whimsical candy land with chocolate rivers and lollipop trees'
 ];
 
-export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ sendPromptToVideoCreator }) => {
+export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ initialPrompt, sendPromptToVideoCreator }) => {
     const { t } = useLanguage();
     
     const LOADING_MESSAGES = useMemo(() => [
@@ -75,6 +76,12 @@ export const ImageGenerator: React.FC<ImageGeneratorProps> = ({ sendPromptToVide
             setCanShare(true);
         }
     }, []);
+
+    useEffect(() => {
+        if (initialPrompt) {
+            setPrompt(initialPrompt);
+        }
+    }, [initialPrompt]);
 
     useEffect(() => {
         checkKey();
