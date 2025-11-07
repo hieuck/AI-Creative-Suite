@@ -68,6 +68,47 @@ export const IdeaGenerator: React.FC<IdeaGeneratorProps> = ({ sendPromptToImageG
         }
     };
 
+    const handleGenerateSingleImage = async (idea: string) => {
+        if (!isKeyReady) {
+            setError(t('idea.error.apiKey'));
+            return;
+        }
+        setError('');
+        setGeneratingState(prev => ({ ...prev, [idea]: { ...prev[idea], image: true } }));
+
+        try {
+            const imageUrl = await generateImageFromPrompt(idea, '16:9');
+            setGeneratedContent(prev => ({ ...prev, [idea]: { ...prev[idea], image: imageUrl } }));
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+            console.error(`Failed to generate image for prompt: "${idea}"`, err);
+            setError(`${t('image.error.apiFail')} ${errorMessage}`);
+        } finally {
+            setGeneratingState(prev => ({ ...prev, [idea]: { ...prev[idea], image: false } }));
+        }
+    };
+
+    const handleGenerateSingleVideo = async (idea: string) => {
+         if (!isKeyReady) {
+            setError(t('idea.error.apiKey'));
+            return;
+        }
+        setError('');
+        setGeneratingState(prev => ({ ...prev, [idea]: { ...prev[idea], video: true } }));
+
+        try {
+            const videoUrl = await generateVideo(idea, '16:9', 8, true);
+            setGeneratedContent(prev => ({ ...prev, [idea]: { ...prev[idea], video: videoUrl } }));
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+            console.error(`Failed to generate video for prompt: "${idea}"`, err);
+            setError(`${t('video.error.apiFail')} ${errorMessage}`);
+        } finally {
+            setGeneratingState(prev => ({ ...prev, [idea]: { ...prev[idea], video: false } }));
+        }
+    };
+
+
     const handleGenerateAllImages = async () => {
         if (!isKeyReady) {
             setError(t('idea.error.apiKey'));
@@ -196,43 +237,60 @@ export const IdeaGenerator: React.FC<IdeaGeneratorProps> = ({ sendPromptToImageG
 
                 {ideas.length > 0 ? (
                     <ul className="space-y-4">
-                        {ideas.map((idea, index) => (
-                            <li key={index} className="bg-gray-900/70 p-4 rounded-lg border border-gray-700 flex flex-col gap-4 animate-fade-in">
-                               <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                                    <p className="text-gray-300 flex-grow">{idea}</p>
-                                    <div className="flex gap-2 flex-shrink-0">
-                                        <button onClick={() => sendPromptToImageGenerator(idea)} className="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-3 rounded-lg flex items-center gap-2 transition-colors text-sm" title={t('idea.button.sendToImage')}>
-                                            <ImageIcon className="w-4 h-4" />
-                                            <span className="hidden md:inline">{t('idea.button.sendToImage')}</span>
-                                        </button>
-                                        <button onClick={() => sendPromptToVideoCreator(idea)} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-3 rounded-lg flex items-center gap-2 transition-colors text-sm" title={t('idea.button.sendToVideo')}>
-                                            <VideoIcon className="w-4 h-4" />
-                                            <span className="hidden md:inline">{t('idea.button.sendToVideo')}</span>
-                                        </button>
-                                    </div>
-                               </div>
-                               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="aspect-video bg-gray-950 rounded-lg flex items-center justify-center relative border border-gray-800">
-                                        {(generatingState[idea]?.image || (batchJob?.type === 'images' && !generatedContent[idea]?.image)) && <Loader />}
-                                        {!generatingState[idea]?.image && generatedContent[idea]?.image && (
-                                            <img src={generatedContent[idea]!.image} alt={`Generated image for: ${idea}`} className="w-full h-full object-contain rounded-lg" />
-                                        )}
-                                        {!(generatingState[idea]?.image) && !generatedContent[idea]?.image && (
-                                            <ImageIcon className="w-10 h-10 text-gray-700" />
-                                        )}
-                                    </div>
-                                    <div className="aspect-video bg-gray-950 rounded-lg flex items-center justify-center relative border border-gray-800">
-                                        {(generatingState[idea]?.video || (batchJob?.type === 'videos' && !generatedContent[idea]?.video)) && <Loader />}
-                                        {!generatingState[idea]?.video && generatedContent[idea]?.video && (
-                                            <video src={generatedContent[idea]!.video} controls muted loop className="w-full h-full object-contain rounded-lg" />
-                                        )}
-                                        {!(generatingState[idea]?.video) && !generatedContent[idea]?.video && (
-                                            <VideoIcon className="w-10 h-10 text-gray-700" />
-                                        )}
-                                    </div>
-                                </div>
-                            </li>
-                        ))}
+                        {ideas.map((idea, index) => {
+                             const isImageLoading = generatingState[idea]?.image || (batchJob?.type === 'images' && !generatedContent[idea]?.image);
+                             const isVideoLoading = generatingState[idea]?.video || (batchJob?.type === 'videos' && !generatedContent[idea]?.video);
+
+                            return (
+                                <li key={index} className="bg-gray-900/70 p-4 rounded-lg border border-gray-700 flex flex-col gap-4 animate-fade-in">
+                                   <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                                        <p className="text-gray-300 flex-grow">{idea}</p>
+                                        <div className="flex gap-2 flex-shrink-0">
+                                            <button onClick={() => sendPromptToImageGenerator(idea)} className="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-3 rounded-lg flex items-center gap-2 transition-colors text-sm" title={t('idea.button.sendToImage')}>
+                                                <ImageIcon className="w-4 h-4" />
+                                                <span className="hidden md:inline">{t('idea.button.sendToImage')}</span>
+                                            </button>
+                                            <button onClick={() => sendPromptToVideoCreator(idea)} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-3 rounded-lg flex items-center gap-2 transition-colors text-sm" title={t('idea.button.sendToVideo')}>
+                                                <VideoIcon className="w-4 h-4" />
+                                                <span className="hidden md:inline">{t('idea.button.sendToVideo')}</span>
+                                            </button>
+                                        </div>
+                                   </div>
+                                   <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="aspect-video bg-gray-950 rounded-lg flex items-center justify-center relative border border-gray-800">
+                                            {isImageLoading ? <Loader /> :
+                                             generatedContent[idea]?.image ? (
+                                                <img src={generatedContent[idea]!.image} alt={`Generated image for: ${idea}`} className="w-full h-full object-contain rounded-lg" />
+                                             ) : (
+                                                <button 
+                                                    onClick={() => handleGenerateSingleImage(idea)}
+                                                    disabled={!!batchJob}
+                                                    className="z-10 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors text-sm disabled:bg-gray-500 disabled:cursor-not-allowed"
+                                                >
+                                                    <ImageIcon className="w-4 h-4" />
+                                                    <span>{t('idea.button.generateImage')}</span>
+                                                </button>
+                                             )}
+                                        </div>
+                                        <div className="aspect-video bg-gray-950 rounded-lg flex items-center justify-center relative border border-gray-800">
+                                            {isVideoLoading ? <Loader /> :
+                                             generatedContent[idea]?.video ? (
+                                                <video src={generatedContent[idea]!.video} controls muted loop className="w-full h-full object-contain rounded-lg" />
+                                             ) : (
+                                                 <button 
+                                                    onClick={() => handleGenerateSingleVideo(idea)}
+                                                    disabled={!!batchJob}
+                                                    className="z-10 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors text-sm disabled:bg-gray-500 disabled:cursor-not-allowed"
+                                                >
+                                                    <VideoIcon className="w-4 h-4" />
+                                                    <span>{t('idea.button.generateVideo')}</span>
+                                                </button>
+                                             )}
+                                        </div>
+                                   </div>
+                                </li>
+                            )
+                        })}
                     </ul>
                 ) : !isLoading && (
                     <div className="text-center text-gray-500 py-10">
